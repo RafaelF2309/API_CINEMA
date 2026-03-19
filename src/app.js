@@ -123,4 +123,119 @@ app.delete('/filmes/:id', async (req, res) => {
     }
 })
 
+
+app.get('/salas', async (req, res) => {
+    try {
+        const salas = await queryAsync('SELECT * FROM sala')
+        res.json({
+            sucesso: true,
+            dados: salas,
+            total: salas.length
+        })
+    } catch (erro) {
+        console.error('Erro ao listar salas:', erro)
+        res.status(500).json({ sucesso: false, mensagem: 'Erro ao listar salas', erro: erro.message })
+    }
+})
+
+
+app.get('/salas/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ sucesso: false, mensagem: 'ID da sala inválido.' })
+        }
+
+        const sala = await queryAsync('SELECT * FROM sala WHERE id = ?', [id])
+        if (sala.length === 0) {
+            return res.status(404).json({ sucesso: false, mensagem: 'Sala não encontrada' })
+        }
+
+        res.json({ sucesso: true, dados: sala[0] })
+    } catch (erro) {
+        res.status(500).json({ sucesso: false, mensagem: 'Erro ao encontrar sala', erro: erro.message })
+    }
+})
+
+
+app.post('/salas', async (req, res) => {
+    try {
+        const { nome, capacidade } = req.body
+        if (!nome || !capacidade) {
+            return res.status(400).json({ sucesso: false, mensagem: 'Nome e capacidade são obrigatórios' })
+        }
+
+        const novaSala = {
+            nome: nome.trim(),
+            capacidade
+        }
+
+        const resultado = await queryAsync('INSERT INTO sala SET ?', [novaSala])
+        res.status(201).json({ sucesso: true, mensagem: 'Sala cadastrada!', id: resultado.insertId })
+    } catch (erro) {
+        res.status(500).json({ sucesso: false, mensagem: 'Erro ao salvar sala.', erro: erro.message })
+    }
+})
+
+
+app.put('/salas/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+        const { nome, capacidade } = req.body
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ sucesso: false, mensagem: 'ID sala inválido' })
+        }
+
+        const salaAtualizada = {}
+        if (nome !== undefined) salaAtualizada.nome = nome.trim()
+        if (capacidade !== undefined) salaAtualizada.capacidade = capacidade
+
+        const resultado = await queryAsync('UPDATE sala SET ? WHERE id = ?', [salaAtualizada, id])
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ sucesso: false, mensagem: 'Sala não encontrada para atualizar' })
+        }
+
+        res.json({ sucesso: true, mensagem: 'Sala atualizada com sucesso' })
+    } catch (erro) {
+        res.status(500).json({ sucesso: false, mensagem: 'Erro ao atualizar.', erro: erro.message })
+    }
+})
+
+
+app.delete('/salas/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ sucesso: false, mensagem: 'ID sala inválido' })
+        }
+
+        const resultado = await queryAsync('DELETE FROM sala WHERE id = ?', [id])
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ sucesso: false, mensagem: 'Sala não encontrada' })
+        }
+
+        res.json({ sucesso: true, mensagem: 'Sala apagada com sucesso' })
+    } catch (erro) {
+        res.status(500).json({ sucesso: false, mensagem: 'Erro ao apagar.', erro: erro.message })
+    }
+})
+
+
+app.get('/sessoes', async (req, res) => {
+    try {
+        const sessoes = await queryAsync('SELECT * FROM sessao')
+        res.json({
+            sucesso: true,
+            dados: sessao,
+            total: sessao.length
+        })
+    } catch (erro) {
+        console.error('Erro ao listar sessões:', erro)
+        res.status(500).json({ sucesso: false, mensagem: 'Erro ao listar sessões', erro: erro.message })
+    }
+})
+
 module.exports = app
